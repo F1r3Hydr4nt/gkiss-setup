@@ -296,12 +296,12 @@ cd linux-${KERNEL_VERSION}
 #|   Sources: kernel.org                                         |
 #|                                                               |
 #|   # Download and extract the firmware.                        |
-#$   wget FIRMWARE_TARBALL.tar.gz                                |
-#$   tar xvf linux-firmware-20191022.tar.gz                      |
+wget https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/snapshot/linux-firmware-20220209.tar.gz
+tar xvf linux-firmware-20220209.tar.gz
 #|                                                               |
 #|   # Copy the required drivers to '/usr/lib/firmware'.         |
-#$   mkdir -p /usr/lib/firmware                                  |
-#$   cp -R ./path/to/driver /usr/lib/firmware                    |
+mkdir -p /usr/lib/firmware
+cp -R ./path/to/driver /usr/lib/firmware
 #|                                                               |
 #|                                                               |
 #|   CONFIGURE THE KERNEL                                        |
