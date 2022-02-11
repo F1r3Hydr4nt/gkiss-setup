@@ -21,7 +21,7 @@ export KISS_PATH=$HOME/repos/grepo/nvidia:$KISS_PATH
 
 mkdir repos
 cd repos
-git clone https://github.com/gkisslinux/grepo
+git clone https://github.com/F1r3Hydr4nt/grepo
 git clone https://github.com/kiss-community/community
 git clone https://github.com/gkisslinux/kiss-bloat
 # See if the packages were picked up
@@ -46,8 +46,8 @@ cd /root
 #|   are how individual packages are built and installed on      |
 #|   a KISS system.                                              |
 #|                                                               |
-kiss build   gnupg1                                         |
-kiss install gnupg1                                         |
+kiss build   gnupg1
+kiss install gnupg1
 #|                                                               |
 #|                                                               |
 #|   IMPORT MY (DYLAN ARAPS) KEY                                 |
@@ -56,10 +56,10 @@ kiss install gnupg1                                         |
 #|   an alternative mirror (pgp.mit.edu for example).            |
 #|                                                               |
 #|   # Import my public key.                                     |
-gpg --keyserver keys.gnupg.net --recv-key 46D62DD9F1DE636E  |
+gpg --keyserver keys.gnupg.net --recv-key 46D62DD9F1DE636E
 #|                                                               |
 #|   # Trust my public key.                                      |
-echo trusted-key 0x46d62dd9f1de636e >>/root/.gnupg/gpg.conf |
+echo trusted-key 0x46d62dd9f1de636e >>/root/.gnupg/gpg.conf
 #|                                                               |
 #|                                                               |
 #|   ENABLE SIGNATURE VERIFICATION                               |
@@ -73,8 +73,8 @@ echo trusted-key 0x46d62dd9f1de636e >>/root/.gnupg/gpg.conf |
 #|   The same steps can also be followed with 3rd-party          |
 #|   repositories if the owner signs their commits.              |
 #|                                                               |
-cd $HOME/repos/grepo/repo                                        |
-# git config merge.verifySignatures true                      |
+cd $HOME/repos/grepo/repo
+git config merge.verifySignatures true
 #|                                                               |
 #|                                                               |
 #+---------------------------------------------------------------+
@@ -106,11 +106,11 @@ cd $HOME/repos/grepo/repo                                        |
 #|   will then be limited to a single core.                      |
 #|                                                               |
 #|   # NOTE: The 'O' in '-O3' is the letter O and NOT 0 (ZERO).  |
-export CFLAGS="-O3 -pipe -march=native"                     |
-export CXXFLAGS="-O3 -pipe -march=native"                   |
+export CFLAGS="-O3 -pipe -march=native"
+export CXXFLAGS="-O3 -pipe -march=native"
 #|                                                               |
 #|   # NOTE: 4 should be changed to match the number of cores.   |
-#$   export MAKEFLAGS="-j4"                                      |
+export MAKEFLAGS="-16"
 #|                                                               |
 #|                                                               |
 #|   UPDATE ALL BASE PACKAGES TO THE LATEST VERSION              |
@@ -383,6 +383,15 @@ cd ..
 
 rm -fR linux-${KERNEL_VERSION}*
 
+# Build libglvnd, and then mesa since NVIDIA drivers require libglvnd.
+# Install the nvidia drivers by building the nvidia package.
+echo | kiss build libglvnd
+kiss install libglvnd
+echo | kiss build mesa
+kiss install mesa
+echo | kiss build nvidia
+kiss install nvidia
+
 #|                                                               |
 #|                                                               |
 #+---------------------------------------------------------------+
@@ -413,14 +422,6 @@ rm -fR linux-${KERNEL_VERSION}*
 echo | kiss build grub
 kiss install grub
 
-# Build libglvnd, and then mesa since NVIDIA drivers require libglvnd.
-# Install the nvidia drivers by building the nvidia package.
-echo | kiss build libglvnd
-kiss install libglvnd
-echo | kiss build mesa
-kiss install mesa
-echo | kiss build nvidia
-kiss install nvidia
 #|                                                               |
 #|   # Required for UEFI.                                        |
 kiss b efibootmgr
@@ -521,8 +522,8 @@ kiss install baseinit
 #|                                                               |
 #|   # Installing a base font is recommended as Xorg             |
 #|   # and applications require fonts to function.               |
-kiss b liberation-fonts                                     |
-kiss i liberation-fonts                                     |
+kiss b liberation-fonts
+kiss i liberation-fonts
 #|                                                               |
 #|                                                               |
 #+---------------------------------------------------------------+
@@ -617,4 +618,4 @@ dd if=/dev/zero of=foo bs=1M 2>/dev/null || true
 rm foo
 
 echo "Stage2 complete, please exit this chroot..."
-ASDDAS
+
