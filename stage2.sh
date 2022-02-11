@@ -1,5 +1,5 @@
 #!/bin/sh
-
+# Modified for gkiss linux: https://github.com/gkisslinux/grepo
 LOOP="/dev/loop7"
 
 set -eo pipefail
@@ -7,15 +7,25 @@ set -eo pipefail
 # Set KISS_PATH and clone main repo
 cd /root
 cat > .profile <<EOF
-export KISS_PATH="\$HOME/repos/repo/core:\$HOME/repos/repo/extra:\$HOME/repos/repo/xorg"
+export KISS_PATH="\$HOME/repos/grepo/core:\$HOME/repos/grepo/extra:\$HOME/repos/grepo/wayland:\$HOME/repos/community/community:\$HOME/repos/kiss-bloat/community"
 export KISS_SU="su"
 EOF
+# Modify KISS_PATH such that the bin repository takes priority over other repositories:
+export KISS_PATH=$HOME/repos/grepo/bin:$KISS_PATH
 
-. ./.profile
+# Modify KISS_PATH such that the nvidia repository takes priority over other repositories since some Wayland packages like wlroots are forked here to add NVIDIA support:
+export KISS_PATH=$HOME/repos/grepo/nvidia:$KISS_PATH
+
+# Reload env
+. ~/.profile
 
 mkdir repos
 cd repos
-git clone https://github.com/gkisslinux/repo
+git clone https://github.com/gkisslinux/grepo
+git clone https://github.com/kiss-community/community
+git clone https://github.com/gkisslinux/kiss-bloat
+# See if the packages were picked up
+echo | kiss search \*  
 cd /root
 
 #+---------------------------------------------------------------+
@@ -36,8 +46,8 @@ cd /root
 #|   are how individual packages are built and installed on      |
 #|   a KISS system.                                              |
 #|                                                               |
-#$   kiss build   gnupg1                                         |
-#$   kiss install gnupg1                                         |
+kiss build   gnupg1                                         |
+kiss install gnupg1                                         |
 #|                                                               |
 #|                                                               |
 #|   IMPORT MY (DYLAN ARAPS) KEY                                 |
@@ -46,10 +56,10 @@ cd /root
 #|   an alternative mirror (pgp.mit.edu for example).            |
 #|                                                               |
 #|   # Import my public key.                                     |
-#$   gpg --keyserver keys.gnupg.net --recv-key 46D62DD9F1DE636E  |
+gpg --keyserver keys.gnupg.net --recv-key 46D62DD9F1DE636E  |
 #|                                                               |
 #|   # Trust my public key.                                      |
-#$   echo trusted-key 0x46d62dd9f1de636e >>/root/.gnupg/gpg.conf |
+echo trusted-key 0x46d62dd9f1de636e >>/root/.gnupg/gpg.conf |
 #|                                                               |
 #|                                                               |
 #|   ENABLE SIGNATURE VERIFICATION                               |
@@ -63,8 +73,8 @@ cd /root
 #|   The same steps can also be followed with 3rd-party          |
 #|   repositories if the owner signs their commits.              |
 #|                                                               |
-#$   cd /var/db/kiss/repo                                        |
-#$   git config merge.verifySignatures true                      |
+cd $HOME/repos/grepo/repo                                        |
+# git config merge.verifySignatures true                      |
 #|                                                               |
 #|                                                               |
 #+---------------------------------------------------------------+
@@ -96,8 +106,8 @@ cd /root
 #|   will then be limited to a single core.                      |
 #|                                                               |
 #|   # NOTE: The 'O' in '-O3' is the letter O and NOT 0 (ZERO).  |
-#$   export CFLAGS="-O3 -pipe -march=native"                     |
-#$   export CXXFLAGS="-O3 -pipe -march=native"                   |
+export CFLAGS="-O3 -pipe -march=native"                     |
+export CXXFLAGS="-O3 -pipe -march=native"                   |
 #|                                                               |
 #|   # NOTE: 4 should be changed to match the number of cores.   |
 #$   export MAKEFLAGS="-j4"                                      |
@@ -260,7 +270,7 @@ done
 #|                                                               |
 #$   wget KERNEL_SOURCE_URL                                      |
 
-KERNEL_VERSION="5.6.14"
+KERNEL_VERSION="5.16.8"
 wget https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-${KERNEL_VERSION}.tar.xz
 
 #|                                                               |
@@ -309,6 +319,18 @@ cd linux-${KERNEL_VERSION}
 
 make defconfig
 
+# Now customise
+echo "Now make the changes for NVIDIA e.g: For kernel configuration, refer to the Gentoo Wiki (https://archive.is/o/13HqT/https://wiki.gentoo.org/wiki/NVIDIA/nvidia-drivers%23Kernel_compatibility). The nouveau kernel module must either be blacklisted from being loaded or disabled in the kernel configuration."
+
+kiss b ncurses
+kiss i ncurses
+
+make menuconfig
+
+export KERNEL_UNAME=5.16.8 # Example
+# Environment variables can't be used in `post-install`.
+depmod "$KERNEL_UNAME"
+
 #|                                                               |
 #|   # Open an interactive menu to edit the generated            |
 #|   # config, enabling anything extra you may need.             |
@@ -338,7 +360,7 @@ make -j $(nproc)
 #|   # This installs directly to /lib (symlink to /usr/lib).     |
 #$   make modules_install                                        |
 
-make modules_install
+make INSTALL_MOD_STRIP=1 modules_install
 
 #|                                                               |
 #|   # Install the built kernel.                                 |
@@ -391,10 +413,18 @@ rm -fR linux-${KERNEL_VERSION}*
 echo | kiss build grub
 kiss install grub
 
+# Build libglvnd, and then mesa since NVIDIA drivers require libglvnd.
+# Install the nvidia drivers by building the nvidia package.
+echo | kiss build libglvnd
+kiss install libglvnd
+echo | kiss build mesa
+kiss install mesa
+echo | kiss build nvidia
+kiss install nvidia
 #|                                                               |
 #|   # Required for UEFI.                                        |
-#$   kiss b efibootmgr                                           |
-#$   kiss i efibootmgr                                           |
+kiss b efibootmgr
+kiss i efibootmgr
 #|                                                               |
 #|                                                               |
 #|   SETUP GRUB                                                  |
@@ -403,17 +433,20 @@ kiss install grub
 #$   grub-install /dev/sdX                                       |
 #$   grub-mkconfig -o /boot/grub/grub.cfg                        |
 
-grub-install $LOOP
-grub-mkconfig -o /boot/grub/grub.cfg
+# grub-install $LOOP
+# grub-mkconfig -o /boot/grub/grub.cfg
 
-sed -i -e 's:/dev/loop[^ ]*:/dev/sda1:g' /boot/grub/grub.cfg
+# sed -i -e 's:/dev/loop[^ ]*:/dev/sda1:g' /boot/grub/grub.cfg
 
 #|                                                               |
 #|   # UEFI (replace 'esp' with the EFI mount point).            |
-#$   grub-install --target=x86_64-efi \                          |
-#|                --efi-directory=esp \                          |
-#|                --bootloader-id=kiss                           |
-#$   grub-mkconfig -o /boot/grub/grub.cfg                        |
+grub-install --target=x86_64-efi \
+--efi-directory=esp \
+--bootloader-id=kiss $LOOP
+
+grub-mkconfig -o /boot/grub/grub.cfg
+sed -i -e 's:/dev/loop[^ ]*:/dev/sda1:g' /boot/grub/grub.cfg
+
 #|                                                               |
 #|                                                               |
 #+---------------------------------------------------------------+
@@ -488,12 +521,12 @@ kiss install baseinit
 #|                                                               |
 #|   # Installing a base font is recommended as Xorg             |
 #|   # and applications require fonts to function.               |
-#$   kiss b liberation-fonts                                     |
-#$   kiss i liberation-fonts                                     |
+kiss b liberation-fonts                                     |
+kiss i liberation-fonts                                     |
 #|                                                               |
 #|                                                               |
 #+---------------------------------------------------------------+
-#
+
 #+---------------------------------------------------------------+
 #|                                                               |
 #|             ADD YOUR USER TO THE RELEVANT GROUPS              |
@@ -532,8 +565,56 @@ kiss install baseinit
 rm /stage2.sh
 rm -r /root/.cache
 
+#
+
+# Generate locales by running locale-gen as root after modifying the /etc/locale.gen file with the appropriate locales separated by newlines (en_US.UTF8 UTF-8 for most users) and add export LANG=en_US.UTF8 to /etc/profile.
+echo "en_US.UTF8 UTF-8" >> /etc/locale.gen
+cat /etc/locale.gen
+locale-gen
+echo "export LANG=en_US.UTF8" >> /etc/profile
+cat /etc/profile
+# For Wayland compositors to work properly, the NVIDIA kernel module MUST be loaded with the modeset parameter set to 1, append the following to /etc/inittab:
+# Run a one-shot command during boot.
+echo "::once:/bin/modprobe nvidia-drm modeset=1" >> /etc/inittab
+
+# --[038] Install Graphical Session (Wayland) (Optional) -------------------------
+
+#   Refer to the documentation for each package.
+
+#     * Wayland Compositor   @/wiki/pkg/sway
+kiss b sway
+kiss i sway
+#     * Terminal Emulator    @/wiki/pkg/foot
+kiss b foot
+kiss i foot
+#     * Web Browser          @/wiki/pkg/firefox
+kiss b firefox
+kiss i firefox
+#     * Media Player         @/wiki/pkg/mpv
+kiss b mpv
+kiss i mpv
+#     * Desktop Background   @/wiki/pkg/wbg
+kiss b wlsunset
+kiss i wlsunset
+#     * Color Temperature    @/wiki/pkg/wlsunset
+kiss b wl-clipboard
+kiss i wl-clipboard
+#     * Clipboard Management @/wiki/pkg/wl-clipboard
+kiss b sway
+kiss i sway
+#     * Screenshots          @/wiki/pkg/grim
+kiss b grim
+kiss i grim
+#     * Region Selection     @/wiki/pkg/slurp
+kiss b slurp
+kiss i slurp
+
+
+echo "YOU NEED TO RUN adduser USERNAME   && passwd USERNAME && passwd for root"
+
 # zero unused disk blocks so we compress well...
 dd if=/dev/zero of=foo bs=1M 2>/dev/null || true
 rm foo
 
 echo "Stage2 complete, please exit this chroot..."
+ASDDAS

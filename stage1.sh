@@ -18,8 +18,10 @@ mkdir root
 
 wget https://github.com/gkisslinux/grepo/releases/download/${VERSION}/gkiss-chroot-${VERSION}.tar.xz
 
-wget https://github.com/gkisslinux/grepo/releases/download/${VERSION}/gkiss-chroot-${VERSION}.tar.xz.sha256
-sha256sum -c < gkiss-chroot-${VERSION}.tar.xz.sha256
+# wget https://github.com/gkisslinux/grepo/releases/download/${VERSION}/gkiss-chroot-${VERSION}.tar.xz.sha256
+# sha256sum -c < gkiss-chroot-${VERSION}.tar.xz.sha256
+echo "YOU HAVE TO MANUALLY CHECK THE GKISS SHASUM"
+sha256sum gkiss-chroot-${VERSION}.tar.xz
 
 dd if=/dev/zero of=gkiss.img bs=1G count=8
 

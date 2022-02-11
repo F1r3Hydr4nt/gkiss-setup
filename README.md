@@ -1,4 +1,4 @@
-Scripts for installing KISS Linux to a disk image
+Scripts for installing *g*KISS Linux to a disk image
 
 Run stage1.sh, this will create a disk image with a single partition, mount it
 on loopback, install KISS, and then enter the chroot.  Inside the chroot, run
