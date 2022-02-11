@@ -15,7 +15,7 @@ EOF
 
 mkdir repos
 cd repos
-git clone https://github.com/kisslinux/repo
+git clone https://github.com/gkisslinux/repo
 cd /root
 
 #+---------------------------------------------------------------+
