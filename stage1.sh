@@ -46,7 +46,7 @@ sudo cp stage2.sh root/
 
 echo "Run ./stage2.sh in the chroot..."
 
-sudo root/bin/gkiss-chroot ./root
+sudo root/bin/kiss-chroot ./root
 
 sudo umount root
 sudo losetup -d $LOOP
