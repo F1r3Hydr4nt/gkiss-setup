@@ -46,8 +46,8 @@ cd /root
 #|   are how individual packages are built and installed on      |
 #|   a KISS system.                                              |
 #|                                                               |
-kiss build   gnupg1
-kiss install gnupg1
+#kiss build   gnupg1
+#kiss install gnupg1
 #|                                                               |
 #|                                                               |
 #|   IMPORT MY (DYLAN ARAPS) KEY                                 |
@@ -56,10 +56,10 @@ kiss install gnupg1
 #|   an alternative mirror (pgp.mit.edu for example).            |
 #|                                                               |
 #|   # Import my public key.                                     |
-gpg --keyserver keys.gnupg.net --recv-key 46D62DD9F1DE636E
+#gpg --keyserver keys.gnupg.net --recv-key 46D62DD9F1DE636E
 #|                                                               |
 #|   # Trust my public key.                                      |
-echo trusted-key 0x46d62dd9f1de636e >>/root/.gnupg/gpg.conf
+#echo trusted-key 0x46d62dd9f1de636e >>/root/.gnupg/gpg.conf
 #|                                                               |
 #|                                                               |
 #|   ENABLE SIGNATURE VERIFICATION                               |
@@ -73,8 +73,8 @@ echo trusted-key 0x46d62dd9f1de636e >>/root/.gnupg/gpg.conf
 #|   The same steps can also be followed with 3rd-party          |
 #|   repositories if the owner signs their commits.              |
 #|                                                               |
-cd $HOME/repos/grepo/repo
-git config merge.verifySignatures true
+# cd $HOME/repos/grepo/repo
+# git config merge.verifySignatures true
 #|                                                               |
 #|                                                               |
 #+---------------------------------------------------------------+
@@ -301,7 +301,7 @@ tar xvf linux-firmware-20220209.tar.gz
 #|                                                               |
 #|   # Copy the required drivers to '/usr/lib/firmware'.         |
 mkdir -p /usr/lib/firmware
-cp -R ./path/to/driver /usr/lib/firmware
+cp -R linux-firmware-20220209 /usr/lib/firmware
 #|                                                               |
 #|                                                               |
 #|   CONFIGURE THE KERNEL                                        |
